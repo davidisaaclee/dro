@@ -8,7 +8,7 @@ export class GraphicObjectView extends R.Component {
         top: this.props.object.origin.y + "px",
         position: "absolute",
         backgroundColor: "#ccc",
-      }, this.props.object.makeStyle()),
+      }, this.makeStyleFor(this.props.object)),
     }, this.props.object.children.map((child, index) => {
       var key = this.props.id + "-" + index
       return R.createElement(GraphicObjectView, {
@@ -17,5 +17,18 @@ export class GraphicObjectView extends R.Component {
         key: key
       });
     }))
+  }
+
+  makeStyleFor(obj) {
+    switch (obj.type) {
+      case "Rectangle":
+        return {
+          width: `${obj.size.x}px`,
+          height: `${obj.size.y}px`,
+        };
+
+      default:
+        return {};
+    }
   }
 }

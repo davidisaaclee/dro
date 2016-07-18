@@ -1,4 +1,4 @@
 require("../styles/style.css");
 
-import { start } from "./runner";
+import { start } from "./Runner";
 start();
