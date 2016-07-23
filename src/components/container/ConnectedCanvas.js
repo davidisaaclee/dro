@@ -3,7 +3,19 @@ import { Canvas } from '../presentational/Canvas';
 import * as Actions from '../../Actions';
 import { Vector } from '../../Models';
 
-const objectSetToObjectTree = (objectSet, rootID) => {
+const mutateObject = (state, objectID, mutator) =>
+  state.objects[objectID] == null
+    ? state
+    : Object.assign(
+        {},
+        state,
+        {
+          objects: Object.assign({}, state.objects, {
+            [objectID]: mutator(state.objects[objectID])
+          })
+        })
+
+const objectSetToObjectTree = (objectSet, rootID = "root") => {
   // TODO: Remove objects as they are parsed, to disallow circular references.
   function unflatten(flatObj) {
     return _.extend({}, flatObj, {
@@ -14,40 +26,49 @@ const objectSetToObjectTree = (objectSet, rootID) => {
   return unflatten(objectSet[rootID]);
 };
 
-const applyDrag = (draggedObjectIDs, dragAmount, objectSet) => {
+const applyDrag = (state) => {
+  let { selectedObjects, dragAmount, objects } = state;
+
   if (dragAmount == null) {
-    return objectSet;
+    return state;
   }
 
-  return draggedObjectIDs
-    .asArray()
-    .reduce(applyDragToObject, objectSet);
+  return Object.assign({}, state, {
+    objects: selectedObjects
+      .asArray()
+      .reduce(applyDragToObject, objects)
+  });
 
-  function applyDragToObject(objectSet, draggedObjectID) {
-    if (objectSet[draggedObjectID] != null) {
-      let draggedObject = objectSet[draggedObjectID];
+  function applyDragToObject(objects, draggedObjectID) {
+    if (objects[draggedObjectID] != null) {
+      let draggedObject = objects[draggedObjectID];
 
-      return Object.assign({}, objectSet, {
+      return Object.assign({}, objects, {
         [draggedObjectID]: Object.assign({}, draggedObject, {
           origin: Vector.sum(draggedObject.origin, dragAmount)
         })
       });
     } else {
-      return objectSet;
+      return objects;
     }
   }
 };
 
-const mapStateToProps = (state) => {
+function applySelection(state) {
+  return state.selectedObjects.asArray().reduce(function (state, id) {
+    return mutateObject(state, id, (obj) => Object.assign({}, obj, {
+      selected: true
+    }));
+  }, state);
+}
+
+function mapStateToProps(state) {
+  let preparedState = applySelection(applyDrag(state));
+
   return {
-    root: objectSetToObjectTree(
-      applyDrag(
-        state.selectedObjects,
-        state.dragAmount,
-        state.objects),
-      "root")
+    root: objectSetToObjectTree(preparedState.objects)
   };
-};
+}
 
 const mapDispatchToProps = (dispatch) => {
   return {

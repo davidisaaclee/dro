@@ -31,7 +31,7 @@ export class GraphicObjectView extends R.Component {
         left: this.props.object.origin.x + "px",
         top: this.props.object.origin.y + "px",
         position: "absolute",
-        backgroundColor: "#000",
+        backgroundColor: "#e88",
       }, this.makeStyleFor(this.props.object)),
     }, this.props.object.children.map((child, index) => {
       let path = this.props.path.concat(child.id);
@@ -69,6 +69,10 @@ export class GraphicObjectView extends R.Component {
     }
   }
 
+  isSelected() {
+    return this.props.object.selected;
+  }
+
   makeStyleFor(obj) {
     const hoverStyle = () => {
       if (this.isHoveredOver()) {
@@ -76,9 +80,7 @@ export class GraphicObjectView extends R.Component {
           outline: "2px solid #f0f"
         };
       } else {
-        return {
-          outline: "none"
-        };
+        return {};
       }
     };
 
@@ -95,7 +97,22 @@ export class GraphicObjectView extends R.Component {
       }
     }
 
-    return Object.assign({}, hoverStyle(), shapeStyle());
+    const selectionStyle = () => {
+      if (this.isSelected()) {
+        return {
+          outline: "1px solid #00f"
+        };
+      } else {
+        return {};
+      }
+    };
+
+
+    return Object.assign({},
+      selectionStyle(),
+      hoverStyle(),
+      shapeStyle()
+      );
   }
 
   handleMouseOver(event) {

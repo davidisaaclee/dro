@@ -20,4 +20,8 @@ const createApplication = (store) =>
 
 const makeStore = () => createStore(reduce)
 
-export const start = () => renderWithStore(makeStore())
+export const start = () => {
+	let store = makeStore()
+	store.subscribe(() => console.log(store.getState()));
+	renderWithStore(store)
+}

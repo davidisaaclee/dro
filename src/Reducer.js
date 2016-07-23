@@ -59,6 +59,16 @@ const nullifyDrag = (state) =>
 		dragAmount: null
 	})
 
+function updateSelection(previousSelectedObjects, objectIDs, extendSelection) {
+	if (extendSelection) {
+		return objectIDs.reduce(
+			(acc, elm) => acc.insert(elm),
+			previousSelectedObjects);
+	} else {
+		return new Set(objectIDs);
+	}
+}
+
 
 export function reduce(state = initialState, action) {
 	switch (action.type) {
@@ -74,9 +84,10 @@ export function reduce(state = initialState, action) {
 				state,
 				{
 					dragAmount: M.Vector.zero,
-					selectedObjects: action.parameters.extendSelection
-						? state.selectedObjects.insert(action.parameters.objectID)
-						: new Set(action.parameters.objectID)
+					selectedObjects: updateSelection(
+						state.selectedObjects,
+						[action.parameters.objectID],
+						action.parameters.extendSelection)
 				});
 
 
@@ -101,18 +112,27 @@ export function reduce(state = initialState, action) {
 						origin: M.Vector.sum(object.origin, action.parameters.displacement)
 					}))
 
+			const deselectIfNeeded = (state) =>
+				Object.assign({}, state, {
+					selectedObjects: updateSelection(
+						state.selectedObjects,
+						[],
+						action.parameters.extendSelection)
+				})
+
 			return state.selectedObjects
 				.asArray()
-				.reduce(dropObject, nullifyDrag(state));
+				.reduce(
+					dropObject,
+					deselectIfNeeded(nullifyDrag(state)));
 
 
 		case Actions.Types.SelectObjects:
 			return Object.assign({}, state, {
-				selectedObjects: action.parameters.extendSelection
-					? action.parameters.objectIDs.reduce(
-							(acc, elm) => acc.insert(elm),
-							state.selectedObjects)
-					: new Set(...action.parameters.objectIDs)
+				selectedObjects: updateSelection(
+					state.selectedObjects,
+					action.parameters.objectIDs,
+					action.parameters.extendSelection)
 			});
 
 
