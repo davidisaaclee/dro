@@ -19,6 +19,9 @@ export class Canvas extends R.Component {
 		this.handleMouseMove = this.handleMouseMove.bind(this);
 		this.handleMouseOverObject = this.handleMouseOverObject.bind(this);
 		this.handleMouseLeftObject = this.handleMouseLeftObject.bind(this);
+
+		this.handleKeypress = this.handleKeypress.bind(this);
+		window.addEventListener("keypress", this.handleKeypress);
 	}
 
   render() {
@@ -31,6 +34,7 @@ export class Canvas extends R.Component {
 			onMouseDown: this.handleMouseDown,
 			onMouseUp: this.handleMouseUp,
 			onMouseMove: this.handleMouseMove,
+			onKeyPress: this.handleKeypress,
     },
       R.createElement(GraphicObjectView, {
         object: this.props.root,
@@ -86,6 +90,10 @@ export class Canvas extends R.Component {
 		if (this.state.isDragging) {
 			this.dragTo(location);
 		}
+
+		this.setState({
+			mouseLocation: location
+		});
   }
 
   dragTo(location) {
@@ -107,6 +115,17 @@ export class Canvas extends R.Component {
 		this.setState({
 			hoveredObject: null
 		})
+  }
+
+  handleKeypress(event) {
+		switch (event.key) {
+			case 'r':
+				if (this.state.mouseLocation == null) {
+					return;
+				}
+
+				this.props.addRectangleAt(this.state.mouseLocation, "root");
+		}
   }
 
   // detectObjectHoverFor(event) {

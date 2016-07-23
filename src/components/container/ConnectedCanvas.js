@@ -47,7 +47,10 @@ const mapDispatchToProps = (dispatch) => {
       dispatch(Actions.DragObject(objectID, dragAmount)),
 
     objectWasDropped: (objectID, displacement) =>
-      dispatch(Actions.DropObject(objectID, displacement))
+      dispatch(Actions.DropObject(objectID, displacement)),
+
+    addRectangleAt: (origin, parentID) =>
+      dispatch(Actions.AddRectangle(origin, parentID)),
   }
 };
 

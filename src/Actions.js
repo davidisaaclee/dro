@@ -13,7 +13,7 @@ export const Types = {
 };
 
 export const AddRectangle =
-	(parent) => makeAction(Types.AddRectangle, { parent });
+	(origin, parent) => makeAction(Types.AddRectangle, { origin, parent });
 
 export const PickupObject =
 	(objectID) => makeAction(Types.PickupObject, { objectID });
