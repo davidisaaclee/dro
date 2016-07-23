@@ -14,40 +14,57 @@ const objectSetToObjectTree = (objectSet, rootID) => {
   return unflatten(objectSet[rootID]);
 };
 
-const applyDrag = (dragInfo, objectSet) => {
-  if (dragInfo == null) {
+const applyDrag = (draggedObjectIDs, dragAmount, objectSet) => {
+  if (dragAmount == null) {
     return objectSet;
   }
 
-  let draggedObject = objectSet[dragInfo.objectID];
+  return draggedObjectIDs
+    .asArray()
+    .reduce(applyDragToObject, objectSet);
 
-  if (draggedObject != null) {
-    return Object.assign({}, objectSet, {
-      [dragInfo.objectID]: Object.assign({}, draggedObject, {
-        origin: Vector.sum(draggedObject.origin, dragInfo.dragAmount)
-      })
-    });
-  } else {
-    return objectSet;
+  function applyDragToObject(objectSet, draggedObjectID) {
+    if (objectSet[draggedObjectID] != null) {
+      let draggedObject = objectSet[draggedObjectID];
+
+      return Object.assign({}, objectSet, {
+        [draggedObjectID]: Object.assign({}, draggedObject, {
+          origin: Vector.sum(draggedObject.origin, dragAmount)
+        })
+      });
+    } else {
+      return objectSet;
+    }
   }
 };
 
 const mapStateToProps = (state) => {
   return {
-    root: objectSetToObjectTree(applyDrag(state.draggedObject, state.objects), "root")
+    root: objectSetToObjectTree(
+      applyDrag(
+        state.selectedObjects,
+        state.dragAmount,
+        state.objects),
+      "root")
   };
 };
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    objectWasPickedUp: (objectID) =>
-      dispatch(Actions.PickupObject(objectID)),
+    objectWasPickedUp: (objectID, extendSelection) =>
+      dispatch(Actions.PickupObject(objectID, extendSelection)),
 
     objectWasDragged: (objectID, dragAmount) =>
       dispatch(Actions.DragObject(objectID, dragAmount)),
 
-    objectWasDropped: (objectID, displacement) =>
-      dispatch(Actions.DropObject(objectID, displacement)),
+    objectWasDropped: (displacement, extendSelection) =>
+      dispatch(Actions.DropObject(displacement, extendSelection)),
+
+    objectWasSelected: (objectID, extendSelection) =>
+      dispatch(Actions.SelectObjects([objectID], extendSelection)),
+
+    objectWasDeselected: (objectID, extendSelection) =>
+      dispatch(Actions.SelectObjects([], extendSelection)),
 
     addRectangleAt: (origin, parentID) =>
       dispatch(Actions.AddRectangle(origin, parentID)),

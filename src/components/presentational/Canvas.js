@@ -9,8 +9,7 @@ export class Canvas extends R.Component {
 		// Setup initial state.
 		this.state = {
 			isDragging: false,
-			dragDisplacement: null,
-			draggedObject: null
+			isExtendingSelection: false,
 		};
 
 		// Bind methods to `this`.
@@ -20,8 +19,13 @@ export class Canvas extends R.Component {
 		this.handleMouseOverObject = this.handleMouseOverObject.bind(this);
 		this.handleMouseLeftObject = this.handleMouseLeftObject.bind(this);
 
-		this.handleKeypress = this.handleKeypress.bind(this);
-		window.addEventListener("keypress", this.handleKeypress);
+		this.handleKeyPress = this.handleKeyPress.bind(this);
+		this.handleKeyDown = this.handleKeyDown.bind(this);
+		this.handleKeyUp = this.handleKeyUp.bind(this);
+
+		window.addEventListener("keypress", this.handleKeyPress);
+		window.addEventListener("keydown", this.handleKeyDown);
+		window.addEventListener("keyup", this.handleKeyUp);
 	}
 
   render() {
@@ -34,7 +38,7 @@ export class Canvas extends R.Component {
 			onMouseDown: this.handleMouseDown,
 			onMouseUp: this.handleMouseUp,
 			onMouseMove: this.handleMouseMove,
-			onKeyPress: this.handleKeypress,
+			onKeyPress: this.handleKeyPress,
     },
       R.createElement(GraphicObjectView, {
         object: this.props.root,
@@ -47,17 +51,12 @@ export class Canvas extends R.Component {
     );
   }
 
-  // componentWillUpdate(nextProps, nextState) {
-		// console.log(nextState);
-  // }
-
-
   // Event handlers
 
   handleMouseDown(event) {
 		let hoveredObjectID = _.last(this.state.hoveredObject);
 		if (hoveredObjectID != null) {
-			this.props.objectWasPickedUp(hoveredObjectID);
+			this.props.objectWasPickedUp(hoveredObjectID, this.state.isExtendingSelection);
 		}
 
 		this.setState({
@@ -74,9 +73,14 @@ export class Canvas extends R.Component {
 
 		// Below a threshold, treat this as a click.
 		if (Vector.magnitude(dragAmount) < 20) {
-			// * clicky *
+			let hoveredObjectID = _.last(this.state.hoveredObject);
+			if (hoveredObjectID != null) {
+				this.props.objectWasSelected(hoveredObjectID, this.state.isExtendingSelection);
+			} else {
+				this.props.objectWasDeselected(hoveredObjectID, this.state.isExtendingSelection);
+			}
 		} else {
-			this.props.objectWasDropped(dragAmount);
+			this.props.objectWasDropped(dragAmount, this.state.isExtendingSelection);
 		}
 
 		this.setState({
@@ -117,7 +121,7 @@ export class Canvas extends R.Component {
 		})
   }
 
-  handleKeypress(event) {
+  handleKeyPress(event) {
 		switch (event.key) {
 			case 'r':
 				if (this.state.mouseLocation == null) {
@@ -125,6 +129,24 @@ export class Canvas extends R.Component {
 				}
 
 				this.props.addRectangleAt(this.state.mouseLocation, "root");
+		}
+  }
+
+  handleKeyDown(event) {
+		switch (event.key) {
+			case "Shift":
+				this.setState({
+					isExtendingSelection: true
+				});
+		}
+  }
+
+  handleKeyUp(event) {
+		switch (event.key) {
+			case "Shift":
+				this.setState({
+					isExtendingSelection: false
+				});
 		}
   }
 

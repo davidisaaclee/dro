@@ -1,49 +1,9 @@
 import * as M from "./Models";
 import * as Actions from "./Actions";
-
-// const initialState = {
-//	objectCounter: 0,
-//	objects: {
-//	  root: M.GraphicObject({
-//			id: 'root',
-//			origin: M.Vector(0, 0),
-//			children: ['o1', 'o2']
-//		}),
-//	  o1: M.Rectangle({
-//			id: 'o1',
-//			origin: M.Vector(500, 100),
-//			children: [],
-//			size: M.Vector(100, 100)
-//		}),
-//	  o2: M.Rectangle({
-//			id: 'o2',
-//			origin: M.Vector(800, 100),
-//			children: ['o3'],
-//			size: M.Vector(30, 400)
-//		}),
-//	  o3: M.Rectangle({
-//			id: 'o3',
-//			origin: M.Vector(100, 200),
-//			children: ['o4', 'o5'],
-//			size: M.Vector(100, 100)
-//		}),
-//	  o4: M.Rectangle({
-//			id: 'o4',
-//			origin: M.Vector(400, 300),
-//			children: [],
-//			size: M.Vector(100, 100)
-//		}),
-//	  o5: M.Rectangle({
-//			id: 'o5',
-//			origin: M.Vector(200, 400),
-//			children: [],
-//			size: M.Vector(100, 100)
-//		}),
-//	},
-//	draggedObject: null
-// };
+import { Set } from "./utility/Set";
 
 const initialState = {
+	selectedObjects: new Set(),
 	objectCounter: 0,
 	objects: {
 	  root: M.GraphicObject({
@@ -52,7 +12,7 @@ const initialState = {
 			children: []
 		}),
 	},
-	draggedObject: null
+	dragAmount: null
 };
 
 function makeRectangle(origin) {
@@ -95,7 +55,9 @@ const mutateObject = (state, objectID, mutator) =>
 				})
 
 const nullifyDrag = (state) =>
-	Object.assign({}, state, { draggedObject: null })
+	Object.assign({}, state, {
+		dragAmount: null
+	})
 
 
 export function reduce(state = initialState, action) {
@@ -111,34 +73,47 @@ export function reduce(state = initialState, action) {
 			return Object.assign({},
 				state,
 				{
-					draggedObject: Object.assign({}, state.draggedObject, {
-						objectID: action.parameters.objectID,
-						dragAmount: M.Vector(0, 0)
-					})
+					dragAmount: M.Vector.zero,
+					selectedObjects: action.parameters.extendSelection
+						? state.selectedObjects.insert(action.parameters.objectID)
+						: new Set(action.parameters.objectID)
 				});
 
 
 		case Actions.Types.DragObject:
-			if (state.draggedObject == null) {
+			if (state.dragAmount == null) {
 				return state;
 			}
 
 			return Object.assign({}, state, {
-				draggedObject: Object.assign({}, state.draggedObject, {
-					dragAmount: action.parameters.dragAmount
-				})
+				dragAmount: action.parameters.dragAmount
 			});
 
 
 		case Actions.Types.DropObject:
-			if (state.draggedObject == null) {
+			if (state.dragAmount == null) {
 				return state;
 			}
 
-			return mutateObject(nullifyDrag(state), state.draggedObject.objectID, (object) =>
-				Object.assign({}, object, {
-					origin: M.Vector.sum(object.origin, action.parameters.displacement)
-				}))
+			const dropObject = (previousState, objectID) =>
+				mutateObject(previousState, objectID, (object) =>
+					Object.assign({}, object, {
+						origin: M.Vector.sum(object.origin, action.parameters.displacement)
+					}))
+
+			return state.selectedObjects
+				.asArray()
+				.reduce(dropObject, nullifyDrag(state));
+
+
+		case Actions.Types.SelectObjects:
+			return Object.assign({}, state, {
+				selectedObjects: action.parameters.extendSelection
+					? action.parameters.objectIDs.reduce(
+							(acc, elm) => acc.insert(elm),
+							state.selectedObjects)
+					: new Set(...action.parameters.objectIDs)
+			});
 
 
 		default:
