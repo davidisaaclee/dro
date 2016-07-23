@@ -31,7 +31,7 @@ export class GraphicObjectView extends R.Component {
         left: this.props.object.origin.x + "px",
         top: this.props.object.origin.y + "px",
         position: "absolute",
-        backgroundColor: "#ccc",
+        backgroundColor: "#000",
       }, this.makeStyleFor(this.props.object)),
     }, this.props.object.children.map((child, index) => {
       let path = this.props.path.concat(child.id);
@@ -73,7 +73,7 @@ export class GraphicObjectView extends R.Component {
     const hoverStyle = () => {
       if (this.isHoveredOver()) {
         return {
-          outline: "2px solid white"
+          outline: "2px solid #f0f"
         };
       } else {
         return {

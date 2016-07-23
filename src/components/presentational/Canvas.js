@@ -26,6 +26,7 @@ export class Canvas extends R.Component {
 			style: {
 				width: "100%",
 				height: "100%",
+				overflow: "hidden"
 			},
 			onMouseDown: this.handleMouseDown,
 			onMouseUp: this.handleMouseUp,
@@ -50,12 +51,15 @@ export class Canvas extends R.Component {
   // Event handlers
 
   handleMouseDown(event) {
+		let hoveredObjectID = _.last(this.state.hoveredObject);
+		if (hoveredObjectID != null) {
+			this.props.objectWasPickedUp(hoveredObjectID);
+		}
+
 		this.setState({
 			isDragging: true,
 			initialDragPoint: { x: event.clientX, y: event.clientY }
 		});
-
-		this.props.objectWasPickedUp("o1");
   }
 
   handleMouseUp(event) {
