@@ -14,7 +14,7 @@ export class GraphicObjectView extends R.Component {
       return R.createElement(GraphicObjectView, {
         object: child,
         id: key,
-        key: key
+        key: key,
       });
     }))
   }

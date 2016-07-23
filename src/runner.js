@@ -4,7 +4,8 @@ import { createStore } from 'redux';
 import { Provider } from 'react-redux';
 
 import { reduce } from './Reducer';
-import { ConnectedApplication } from './components/container/ConnectedApplication';
+// import { ConnectedApplication } from './components/container/ConnectedApplication';
+import { ConnectedCanvas } from './components/container/ConnectedCanvas';
 
 const renderWithStore = (store) =>
   ReactDOM.render(
@@ -15,7 +16,7 @@ const createApplication = (store) =>
   React.createElement(
       Provider,
       { store },
-      React.createElement(ConnectedApplication))
+      React.createElement(ConnectedCanvas))
 
 const makeStore = () => createStore(reduce)
 

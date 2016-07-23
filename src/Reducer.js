@@ -1,5 +1,6 @@
 import * as M from "./Models";
 import * as Actions from "./Actions";
+import { Vector } from './Models';
 
 const initialState = {
 	objectCounter: 0,
@@ -33,7 +34,8 @@ const initialState = {
 			children: [],
 			size: M.Vector(100, 100)
 		}),
-	}
+	},
+	draggedObject: null
 };
 
 function makeRectangle(parentID) {
@@ -54,10 +56,59 @@ const insertObject = (state, object) =>
 					{ [`object-${state.objectCounter}`]: object })
 		})
 
+const mutateObject = (state, objectID, mutator) =>
+	state.objects[objectID] == null
+		? state
+		: Object.assign(
+				{},
+				state,
+				{
+					objects: Object.assign({}, state.objects, {
+						[objectID]: mutator(state.objects[objectID])
+					})
+				})
+
+const nullifyDrag = (state) =>
+	Object.assign({}, state, { draggedObject: null })
+
+
 export function reduce(state = initialState, action) {
 	switch (action.type) {
 		case Actions.Types.AddRectangle:
 			return insertObject(state, makeRectangle(action.parameters.parent))
+
+		case Actions.Types.PickupObject:
+			return Object.assign({},
+				state,
+				{
+					draggedObject: Object.assign({}, state.draggedObject, {
+						objectID: action.parameters.objectID,
+						dragAmount: Vector(0, 0)
+					})
+				});
+
+		case Actions.Types.DragObject:
+			if (state.draggedObject == null) {
+				return state;
+			}
+
+			return Object.assign({},
+				state,
+				{
+					draggedObject: Object.assign({}, state.draggedObject, {
+						dragAmount: action.parameters.dragAmount
+					})
+				});
+
+		case Actions.Types.DropObject:
+			if (state.draggedObject == null) {
+				return state;
+			}
+
+			return mutateObject(nullifyDrag(state), state.draggedObject.objectID, (object) =>
+				Object.assign({}, object, {
+					origin: Vector.sum(object.origin, action.parameters.displacement)
+				}))
 
 		default:
 			return state
