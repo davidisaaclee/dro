@@ -18,8 +18,8 @@ export const Vector = _.extend(VectorCons, {
     VectorCons(v1.x + v2.x, v1.y + v2.y),
 })
 
-export const GraphicObject = ({ origin = Vector.zero, children = [] }, continuation = _.identity) =>
-  continuation({ origin, children, type: "GraphicObject" })
+export const GraphicObject = ({ id, origin = Vector.zero, children = [] }, continuation = _.identity) =>
+  continuation({ id, origin, children, type: "GraphicObject" })
 
 export const Rectangle =
   extend(
