@@ -88,7 +88,7 @@ const nullifyDrag = R.set(dragAmountLens, null)
 
 const updateSelection = (objectIDs, extendSelection) => (previousSelectedObjects) =>
 	extendSelection
-		? objectIDs.reduce(Set.insert, previousSelectedObjects)
+		? objectIDs.reduce(Set.toggle, previousSelectedObjects)
 		: new Set(objectIDs)
 
 
@@ -106,7 +106,9 @@ export function reduce(state = initialState, action) {
 			const selectObj =
 				R.over(
 					selectedObjectsLens,
-					updateSelection([action.parameters.objectID], action.parameters.extendSelection));
+					updateSelection(
+						[action.parameters.objectID],
+						action.parameters.extendSelection));
 
 			return R.compose(resetDrag, selectObj)(state);
 
@@ -127,16 +129,19 @@ export function reduce(state = initialState, action) {
 			}
 
 			const dropObject = (previousState, objectID) =>
-				mutateObject(previousState, objectID, (object) =>
-					Object.assign({}, object, {
-						origin: M.Vector.sum(object.origin, action.parameters.displacement)
-					}))
+				mutateObject(previousState, objectID,
+					R.over(
+						R.lensProp('origin'),
+						(origin) => M.Vector.sum(origin, action.parameters.displacement)))
+					// Object.assign({}, object, {
+					//	origin: M.Vector.sum(object.origin, action.parameters.displacement)
+					// }))
 
-			const deselectIfNeeded = (state) =>
-				R.over(
-					selectedObjectsLens,
-					updateSelection([], action.parameters.extendSelection),
-					state)
+			const deselectIfNeeded = (state) => state
+				// R.over(
+				//	selectedObjectsLens,
+				//	updateSelection([], action.parameters.extendSelection),
+				//	state)
 
 			return state.selectedObjects
 				.asArray()
@@ -146,10 +151,11 @@ export function reduce(state = initialState, action) {
 
 
 		case Actions.Types.SelectObjects:
-			return R.over(
-				selectedObjectsLens,
-				updateSelection(action.parameters.objectIDs, action.parameters.extendSelection),
-				state)
+			return state;
+			// return R.over(
+			//	selectedObjectsLens,
+			//	updateSelection(action.parameters.objectIDs, action.parameters.extendSelection),
+			//	state)
 
 
 		default:

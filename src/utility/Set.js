@@ -13,13 +13,11 @@ export class Set {
 	}
 
 	contains(value) {
-		return this._impl[value] === true;
+		return Set.contains(this, value);
 	}
 
 	remove(value) {
-		let removed = Object.assign({}, this._impl);
-		delete removed[value];
-		return setFromObj(removed);
+		return Set.remove(this, value);
 	}
 
 	insert(value) {
@@ -35,5 +33,23 @@ Object.assign(Set, {
 	insert: (set, value) =>
 		setFromObj(Object.assign({}, set._impl, {
 			[value]: true
-		}))
+		})),
+
+	contains: (set, value) =>
+		set._impl[value] === true,
+
+	remove: (set, value) => {
+		let removed = Object.assign({}, set._impl);
+		delete removed[value];
+		return setFromObj(removed);
+	},
+
+	// If `value` is not already a member of `set`, inserts `value` into `set`.
+	// If `value` is already a member of `set`, remove `value` from `set`.
+	toggle: (set, value) => {
+		console.log("Toggling ", value, "in", set.asArray());
+		return set.contains(value)
+			? set.remove(value)
+			: set.insert(value)
+	}
 })
