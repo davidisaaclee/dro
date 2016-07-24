@@ -72,7 +72,7 @@ export class Canvas extends R.Component {
 		};
 
 		// Below a threshold, treat this as a click.
-		if (Vector.magnitude(dragAmount) < 20) {
+		if (Vector.magnitude(dragAmount) < 1) {
 			let hoveredObjectID = _.last(this.state.hoveredObject);
 			if (hoveredObjectID != null) {
 				this.props.objectWasSelected(hoveredObjectID, this.state.isExtendingSelection);

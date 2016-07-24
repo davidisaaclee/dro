@@ -10,80 +10,49 @@ export class GraphicObjectView extends R.Component {
   }
 
   render() {
-    let selectedPath = this._restOfSelectedPath();
-
-    const isChildSelected = (child) => {
-      if (selectedPath == null) {
-        return false;
-      } else {
-        return selectedPath[0] == child.id;
-      }
-    }
-
     return R.DOM.div({
       id: this.props.path.join('-'),
+
+      className: this._getClassList().join(" "),
 
       onMouseOver: this.handleMouseOver,
       onMouseLeave: this.handleMouseLeave,
 
       style: _.extend({
-        boxSizing: "border-box",
         left: this.props.object.origin.x + "px",
         top: this.props.object.origin.y + "px",
-        position: "absolute",
-        backgroundColor: "#e88",
       }, this.makeStyleFor(this.props.object)),
     }, this.props.object.children.map((child, index) => {
       let path = this.props.path.concat(child.id);
-
       return R.createElement(GraphicObjectView, {
         object: child,
         id: child.id,
         path: path,
         key: path.join("-"),
-        hoveredObjectPath: isChildSelected(child) ? selectedPath : null,
 
         mouseOverObject: this.props.mouseOverObject,
         mouseLeftObject: this.props.mouseLeftObject,
       });
+    }),
+    R.DOM.span({
+      className: "knob"
     }))
-  }
-
-  _restOfSelectedPath() {
-    if (this.props.hoveredObjectPath == null) {
-      return null;
-    } else if (this.props.hoveredObjectPath.length == 0) {
-      return null;
-    } else {
-      return this.props.hoveredObjectPath.slice(1);
-    }
-  }
-
-  isHoveredOver() {
-    let rest = this._restOfSelectedPath();
-
-    if (rest == null) {
-      return false;
-    } else if (rest.length == 0) {
-      return true;
-    }
   }
 
   isSelected() {
     return this.props.object.selected;
   }
 
-  makeStyleFor(obj) {
-    const hoverStyle = () => {
-      if (this.isHoveredOver()) {
-        return {
-          outline: "2px solid #f0f"
-        };
-      } else {
-        return {};
-      }
-    };
+  _getClassList() {
+    let result = ["gov"];
+    result.push(this.props.object.type);
+    if (this.isSelected()) {
+      result.push("selected");
+    }
+    return result;
+  }
 
+  makeStyleFor(obj) {
     const shapeStyle = () => {
       switch (obj.type) {
         case "Rectangle":
@@ -96,23 +65,8 @@ export class GraphicObjectView extends R.Component {
           return {};
       }
     }
-
-    const selectionStyle = () => {
-      if (this.isSelected()) {
-        return {
-          outline: "1px solid #00f"
-        };
-      } else {
-        return {};
-      }
-    };
-
-
-    return Object.assign({},
-      selectionStyle(),
-      hoverStyle(),
-      shapeStyle()
-      );
+    
+    return Object.assign({}, shapeStyle());
   }
 
   handleMouseOver(event) {

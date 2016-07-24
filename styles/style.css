@@ -1,3 +1,58 @@
 body {
-  background: #fff;
+	background: #fff;
+}
+
+.gov {
+	background-color: #ccf;
+	box-sizing: border-box;
+	position: absolute;
+}
+
+.gov:hover {
+	outline: #f0f solid 2px;
+	cursor: -webkit-grab;
+	cursor: grab;
+}
+
+.gov:active {
+	cursor: -webkit-grabbing;
+	cursor: grabbing;
+}
+
+.gov:hover > .knob {
+	visibility: visible;
+}
+
+.gov > .knob {
+	visibility: hidden;
+}
+
+.gov .selected {
+	outline: 1px solid #00f;
+}
+
+.knob {
+	background-color: #ddd;
+	position: absolute;
+
+	right: -8px;
+	bottom: -8px;
+	width: 16px;
+	height: 16px;
+	border-radius: 8px;
+
+	transition: transform ease 0.1s;
+}
+
+.knob:hover {
+	background-color: #ccc;
+	transform: scale3d(1.3, 1.3, 1);
+
+	cursor: -webkit-se-resize;
+	cursor: se-resize;
+}
+
+.knob:active {
+	background-color: #aaa;
+	transform: scale3d(1.3, 1.3, 1);
 }

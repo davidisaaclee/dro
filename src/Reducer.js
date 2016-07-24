@@ -42,13 +42,6 @@ const insertObject = (state, object, parentID) => {
 	return stateWithUpdatedParent;
 }
 
-// function removeObject(objectSet, objectID) {
-//	let parents = Object.keys(objectSet)
-//		.filter((key) => objectSet[key].children.contains(objectID));
-
-//	parents.reduce((acc, elm) => mutateObject(acc,))
-// }
-
 function mutateObjectInObjectSet(objectSet, objectID, mutator) {
 	return Object.assign({}, objectSet, {
 		[objectID]: mutator(objectSet[objectID])
