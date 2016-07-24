@@ -18,7 +18,7 @@ export class GraphicObjectView extends R.Component {
       onMouseOver: this.handleMouseOver,
       onMouseLeave: this.handleMouseLeave,
 
-      style: _.extend({
+      style: Object.assign({
         left: this.props.object.origin.x + "px",
         top: this.props.object.origin.y + "px",
       }, this.makeStyleFor(this.props.object)),

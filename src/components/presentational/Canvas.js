@@ -1,8 +1,9 @@
-import * as R from 'react';
+import * as React from 'react';
+import * as R from 'ramda';
 import { GraphicObjectView } from './GraphicObjectView';
 import { Vector } from '../../Models';
 
-export class Canvas extends R.Component {
+export class Canvas extends React.Component {
 	constructor(props) {
 		super(props);
 
@@ -29,7 +30,7 @@ export class Canvas extends R.Component {
 	}
 
   render() {
-    return R.DOM.div({
+    return React.DOM.div({
 			style: {
 				width: "100%",
 				height: "100%",
@@ -40,7 +41,7 @@ export class Canvas extends R.Component {
 			onMouseMove: this.handleMouseMove,
 			onKeyPress: this.handleKeyPress,
     },
-      R.createElement(GraphicObjectView, {
+      React.createElement(GraphicObjectView, {
         object: this.props.root,
         id: this.props.root.id,
         path: [this.props.root.id],
@@ -54,7 +55,11 @@ export class Canvas extends R.Component {
   // Event handlers
 
   handleMouseDown(event) {
-		let hoveredObjectID = _.last(this.state.hoveredObject);
+		if (this.state.hoveredObject == null) {
+			return;
+		}
+
+		let hoveredObjectID = R.last(this.state.hoveredObject);
 		if (hoveredObjectID != null) {
 			this.props.objectWasPickedUp(hoveredObjectID, this.state.isExtendingSelection);
 		}
@@ -66,6 +71,10 @@ export class Canvas extends R.Component {
   }
 
   handleMouseUp(event) {
+		if (!this.state.isDragging) {
+			return;
+		}
+
 		let dragAmount = {
 			x: event.clientX - this.state.initialDragPoint.x,
 			y: event.clientY - this.state.initialDragPoint.y
@@ -73,7 +82,7 @@ export class Canvas extends R.Component {
 
 		// Below a threshold, treat this as a click.
 		if (Vector.magnitude(dragAmount) < 1) {
-			let hoveredObjectID = _.last(this.state.hoveredObject);
+			let hoveredObjectID = R.last(this.state.hoveredObject);
 			if (hoveredObjectID != null) {
 				this.props.objectWasSelected(hoveredObjectID, this.state.isExtendingSelection);
 			} else {

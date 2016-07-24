@@ -2,6 +2,27 @@ import * as M from "./Models";
 import * as Actions from "./Actions";
 import { Set } from "./utility/Set";
 
+// // TODO: Move to this shape of state.
+// const initState = {
+//	view: {
+//		selectedObjects: new Set(),
+//		dragAmount: null,
+//	},
+//	document: {
+//		objectCounter: 0,
+//		objects: {
+//		  root: M.GraphicObject({
+//				id: 'root',
+//				origin: M.Vector(0, 0),
+//				children: []
+//			}),
+//		},
+//	},
+//	session: {
+
+//	}
+// }
+
 const initialState = {
 	selectedObjects: new Set(),
 	objectCounter: 0,

@@ -18,7 +18,7 @@ const mutateObject = (state, objectID, mutator) =>
 const objectSetToObjectTree = (objectSet, rootID = "root") => {
   // TODO: Remove objects as they are parsed, to disallow circular references.
   function unflatten(flatObj) {
-    return _.extend({}, flatObj, {
+    return Object.assign({}, flatObj, {
       children: flatObj.children.map((childID) => unflatten(objectSet[childID]))
     });
   }

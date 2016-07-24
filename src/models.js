@@ -1,11 +1,11 @@
-import * as _ from 'lodash';
+import * as R from 'ramda';
 import { extend } from './utility/extend';
 
 // --- Model --- //
 
 const VectorCons = (x, y) => { return { x, y } }
 
-export const Vector = _.extend(VectorCons, {
+export const Vector = Object.assign(VectorCons, {
   zero: VectorCons(0, 0),
 
   squareMagnitude: (vector) =>
@@ -24,10 +24,10 @@ export const Vector = _.extend(VectorCons, {
     Vector.sum(v1, Vector.negate(v2)),
 })
 
-export const GraphicObject = ({ id, origin = Vector.zero, children = [] }, continuation = _.identity) =>
+export const GraphicObject = ({ id, origin = Vector.zero, children = [] }, continuation = R.identity) =>
   continuation({ id, origin, children, type: "GraphicObject" })
 
 export const Rectangle =
   extend(
     GraphicObject,
-    (base, { size }) => _.extend(base, { size, type: "Rectangle" }))
+    (base, { size }) => Object.assign(base, { size, type: "Rectangle" }))
