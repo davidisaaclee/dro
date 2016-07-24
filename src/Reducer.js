@@ -1,3 +1,5 @@
+import * as R from 'ramda';
+
 import * as M from "./Models";
 import * as Actions from "./Actions";
 import { Set } from "./utility/Set";
@@ -19,7 +21,6 @@ import { Set } from "./utility/Set";
 //		},
 //	},
 //	session: {
-
 //	}
 // }
 
@@ -44,73 +45,70 @@ function makeRectangle(origin) {
 	})
 }
 
-const insertObject = (state, object, parentID) => {
-	let id = `object-${state.objectCounter}`;
+// ObjectID -> GraphicObject -> GraphicObject
+const addChild = (childID) =>
+	R.over(R.lensProp('children'), R.append(childID))
 
-	let stateWithNewObject = Object.assign({}, state,
-		{ objectCounter: state.objectCounter + 1 },
-		{
-			objects: Object.assign({}, state.objects, {
-				[id]: Object.assign({}, object, { id: id })
-			})
-		});
+// ObjectID -> GraphicObject -> GraphicObject
+const setID = (id) => R.set(R.lensProp('id'), id)
 
+// (GraphicObject, ObjectID) -> State -> State
+const insertObject = (object, parentID) => (state) => {
+	let id = `object-${R.view(objectCounterLens, state)}`;
 
-	let stateWithUpdatedParent = mutateObject(stateWithNewObject, parentID, (parent) => {
-		return Object.assign({}, parent, { children: parent.children.concat([id]) });
-	});
+	let addObject = R.set(R.compose(objectSetLens, R.lensProp(id)), object);
+	let updateID = R.over(lensForObjectAtID(id), setID(id));
+	let updateCount = R.over(objectCounterLens, R.inc);
+	let updateParent = R.over(lensForObjectAtID(parentID), addChild(id));
 
-	return stateWithUpdatedParent;
+	return R.compose(updateParent, updateCount, updateID, addObject)(state);
 }
 
-function mutateObjectInObjectSet(objectSet, objectID, mutator) {
-	return Object.assign({}, objectSet, {
-		[objectID]: mutator(objectSet[objectID])
-	});
-}
+// Lens State Int
+const objectCounterLens = R.lensProp('objectCounter');
+
+// Lens State GraphicObjectSet
+const objectSetLens = R.lensProp('objects');
+
+// ObjectID -> Lens State GraphicObject
+const lensForObjectAtID = (objectID) =>
+	R.compose(objectSetLens, R.lensProp(objectID))
+
+// Lens State [ObjectID]
+const selectedObjectsLens = R.lensProp('selectedObjects')
+
+
+// Lens State Vector
+const dragAmountLens = R.lensProp('dragAmount');
 
 const mutateObject = (state, objectID, mutator) =>
-	state.objects[objectID] == null
-		? state
-		: Object.assign({}, state, {
-				objects: mutateObjectInObjectSet(state.objects, objectID, mutator)
-			})
+	R.over(lensForObjectAtID(objectID), mutator, state)
 
-const nullifyDrag = (state) =>
-	Object.assign({}, state, {
-		dragAmount: null
-	})
+const nullifyDrag = R.set(dragAmountLens, null)
 
-function updateSelection(previousSelectedObjects, objectIDs, extendSelection) {
-	if (extendSelection) {
-		return objectIDs.reduce(
-			(acc, elm) => acc.insert(elm),
-			previousSelectedObjects);
-	} else {
-		return new Set(objectIDs);
-	}
-}
+const updateSelection = (objectIDs, extendSelection) => (previousSelectedObjects) =>
+	extendSelection
+		? objectIDs.reduce(Set.insert, previousSelectedObjects)
+		: new Set(objectIDs)
 
 
 export function reduce(state = initialState, action) {
 	switch (action.type) {
 		case Actions.Types.AddRectangle:
 			return insertObject(
-				state,
 				makeRectangle(action.parameters.origin),
-				action.parameters.parent);
+				action.parameters.parent)(state);
 
 
 		case Actions.Types.PickupObject:
-			return Object.assign({},
-				state,
-				{
-					dragAmount: M.Vector.zero,
-					selectedObjects: updateSelection(
-						state.selectedObjects,
-						[action.parameters.objectID],
-						action.parameters.extendSelection)
-				});
+			const resetDrag =
+				R.set(dragAmountLens, M.Vector.zero);
+			const selectObj =
+				R.over(
+					selectedObjectsLens,
+					updateSelection([action.parameters.objectID], action.parameters.extendSelection));
+
+			return R.compose(resetDrag, selectObj)(state);
 
 
 		case Actions.Types.DragObject:
@@ -135,12 +133,10 @@ export function reduce(state = initialState, action) {
 					}))
 
 			const deselectIfNeeded = (state) =>
-				Object.assign({}, state, {
-					selectedObjects: updateSelection(
-						state.selectedObjects,
-						[],
-						action.parameters.extendSelection)
-				})
+				R.over(
+					selectedObjectsLens,
+					updateSelection([], action.parameters.extendSelection),
+					state)
 
 			return state.selectedObjects
 				.asArray()
@@ -150,12 +146,10 @@ export function reduce(state = initialState, action) {
 
 
 		case Actions.Types.SelectObjects:
-			return Object.assign({}, state, {
-				selectedObjects: updateSelection(
-					state.selectedObjects,
-					action.parameters.objectIDs,
-					action.parameters.extendSelection)
-			});
+			return R.over(
+				selectedObjectsLens,
+				updateSelection(action.parameters.objectIDs, action.parameters.extendSelection),
+				state)
 
 
 		default:
