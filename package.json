@@ -19,7 +19,8 @@
     "webpack": "^1.13.1"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack-dev-server --progress --colors"
   },
   "author": "David Isaac Lee <david@david-lee.net> (http://david-lee.net/)",
   "license": "ISC"
