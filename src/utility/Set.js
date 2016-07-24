@@ -47,7 +47,6 @@ Object.assign(Set, {
 	// If `value` is not already a member of `set`, inserts `value` into `set`.
 	// If `value` is already a member of `set`, remove `value` from `set`.
 	toggle: (set, value) => {
-		console.log("Toggling ", value, "in", set.asArray());
 		return set.contains(value)
 			? set.remove(value)
 			: set.insert(value)

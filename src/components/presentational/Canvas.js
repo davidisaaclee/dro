@@ -11,6 +11,10 @@ export class Canvas extends React.Component {
 		this.state = {
 			isDragging: false,
 			isExtendingSelection: false,
+			hoveredObjectPath: null,
+			interactionObjectID: null,
+			initialDragPoint: null,
+			mouseLocation: null,
 		};
 
 		// Bind methods to `this`.
@@ -23,7 +27,6 @@ export class Canvas extends React.Component {
 		this.handleKeyPress = this.handleKeyPress.bind(this);
 		this.handleKeyDown = this.handleKeyDown.bind(this);
 		this.handleKeyUp = this.handleKeyUp.bind(this);
-
 		window.addEventListener("keypress", this.handleKeyPress);
 		window.addEventListener("keydown", this.handleKeyDown);
 		window.addEventListener("keyup", this.handleKeyUp);
@@ -45,7 +48,8 @@ export class Canvas extends React.Component {
         object: this.props.root,
         id: this.props.root.id,
         path: [this.props.root.id],
-        hoveredObjectPath: this.state.hoveredObject,
+        hoveredObjectPath: this.state.hoveredObjectPath,
+
         mouseOverObject: this.handleMouseOverObject,
         mouseLeftObject: this.handleMouseLeftObject,
       })
@@ -55,18 +59,14 @@ export class Canvas extends React.Component {
   // Event handlers
 
   handleMouseDown(event) {
-		if (this.state.hoveredObject == null) {
+		if (this.state.hoveredObjectPath == null) {
 			return;
-		}
-
-		let hoveredObjectID = R.last(this.state.hoveredObject);
-		if (hoveredObjectID != null) {
-			this.props.objectWasPickedUp(hoveredObjectID, this.state.isExtendingSelection);
 		}
 
 		this.setState({
 			isDragging: true,
-			initialDragPoint: { x: event.clientX, y: event.clientY }
+			initialDragPoint: Vector(event.clientX, event.clientY),
+			interactionObjectID: R.last(this.state.hoveredObjectPath)
 		});
   }
 
@@ -75,26 +75,20 @@ export class Canvas extends React.Component {
 			return;
 		}
 
-		let dragAmount = {
-			x: event.clientX - this.state.initialDragPoint.x,
-			y: event.clientY - this.state.initialDragPoint.y
-		};
+		let location = Vector(event.clientX, event.clientY);
+		let displacement = Vector.difference(location, this.state.initialDragPoint);
 
 		// Below a threshold, treat this as a click.
-		if (Vector.magnitude(dragAmount) < 1) {
-			let hoveredObjectID = R.last(this.state.hoveredObject);
-			if (hoveredObjectID != null) {
-				this.props.objectWasSelected(hoveredObjectID, this.state.isExtendingSelection);
-			} else {
-				this.props.objectWasDeselected(hoveredObjectID, this.state.isExtendingSelection);
-			}
+		if (Vector.magnitude(displacement) < 1) {
+			this.objectWasSelected(this.state.interactionObjectID);
 		} else {
-			this.props.objectWasDropped(dragAmount, this.state.isExtendingSelection);
+			this.objectWasDragged(this.state.interactionObjectID, displacement);
 		}
 
 		this.setState({
 			isDragging: false,
-			initialDragPoint: null
+			initialDragPoint: null,
+			interactionObjectID: null,
 		});
   }
 
@@ -110,23 +104,24 @@ export class Canvas extends React.Component {
   }
 
   dragTo(location) {
-		let dragAmount = {
-			x: location.x - this.state.initialDragPoint.x,
-			y: location.y - this.state.initialDragPoint.y
-		};
+		if (this.state.interactionObjectID == null) {
+			return;
+		}
 
-		this.props.objectWasDragged(dragAmount);
+		let displacement = Vector.difference(location, this.state.initialDragPoint);
+		this.props.selectObject(this.state.interactionObjectID, this.state.isExtendingSelection);
+		this.props.dragSelectedObjects(displacement);
   }
 
   handleMouseOverObject(path, event) {
 		this.setState({
-			hoveredObject: path
+			hoveredObjectPath: path
 		})
   }
 
 	handleMouseLeftObject(path, event) {
 		this.setState({
-			hoveredObject: null
+			hoveredObjectPath: null
 		})
   }
 
@@ -159,18 +154,16 @@ export class Canvas extends React.Component {
 		}
   }
 
-  // detectObjectHoverFor(event) {
-		// const elementIsGraphicObjectView = (element) =>
-		//	element.classList.contains("gov")
+  objectWasDragged(objectID, displacement) {
+		this.props.selectObject(objectID, this.state.isExtendingSelection);
+		this.props.moveSelectedObjects(displacement);
+  }
 
-		// if (elementIsGraphicObjectView(event.target)) {
-		//	this.setState({
-		//		hoveredObject: event.target.id
-		//	});
-		// } else {
-		//	this.setState({
-		//		hoveredObject: null
-		//	});
-		// }
-  // }
+	objectWasSelected(objectID) {
+		if (this.state.isExtendingSelection) {
+			this.props.toggleObjectSelection(objectID, true);
+		} else {
+			this.props.selectObject(objectID, false);
+		}
+	}
 }

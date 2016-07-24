@@ -1,7 +1,9 @@
+import * as R from 'ramda';
 import { connect } from 'react-redux';
 import { Canvas } from '../presentational/Canvas';
 import * as Actions from '../../Actions';
 import { Vector } from '../../Models';
+import * as L from '../../Lenses';
 
 const mutateObject = (state, objectID, mutator) =>
   state.objects[objectID] == null
@@ -29,29 +31,26 @@ const objectSetToObjectTree = (objectSet, rootID = "root") => {
 const applyDrag = (state) => {
   let { selectedObjects, dragAmount, objects } = state;
 
-  if (dragAmount == null) {
+  if (state.dragAmount == null) {
     return state;
   }
 
-  return Object.assign({}, state, {
-    objects: selectedObjects
-      .asArray()
-      .reduce(applyDragToObject, objects)
-  });
-
-  function applyDragToObject(objects, draggedObjectID) {
-    if (objects[draggedObjectID] != null) {
-      let draggedObject = objects[draggedObjectID];
-
-      return Object.assign({}, objects, {
-        [draggedObjectID]: Object.assign({}, draggedObject, {
-          origin: Vector.sum(draggedObject.origin, dragAmount)
-        })
-      });
-    } else {
+  function applyDragToObjectID(objects, draggedObjectID) {
+    if (objects[draggedObjectID] == null) {
       return objects;
     }
+
+    return R.over(
+      R.lensPath([draggedObjectID, 'origin']),
+      R.curry(Vector.sum)(dragAmount),
+      objects);
   }
+
+  return Object.assign({}, state, {
+    objects: state.selectedObjects
+      .asArray()
+      .reduce(applyDragToObjectID, state.objects)
+  });
 };
 
 function applySelection(state) {
@@ -72,23 +71,21 @@ function mapStateToProps(state) {
 
 const mapDispatchToProps = (dispatch) => {
   return {
-    objectWasPickedUp: (objectID, extendSelection) =>
-      dispatch(Actions.PickupObject(objectID, extendSelection)),
-
-    objectWasDragged: (objectID, dragAmount) =>
-      dispatch(Actions.DragObject(objectID, dragAmount)),
-
-    objectWasDropped: (displacement, extendSelection) =>
-      dispatch(Actions.DropObject(displacement, extendSelection)),
-
-    objectWasSelected: (objectID, extendSelection) =>
-      dispatch(Actions.SelectObjects([objectID], extendSelection)),
-
-    objectWasDeselected: (objectID, extendSelection) =>
-      dispatch(Actions.SelectObjects([], extendSelection)),
+    dragSelectedObjects: (displacement) =>
+      dispatch(Actions.DragSelectedObjects(displacement)),
 
     addRectangleAt: (origin, parentID) =>
       dispatch(Actions.AddRectangle(origin, parentID)),
+
+    selectObject: (objectID, extendSelection) =>
+      dispatch(Actions.SelectObjects([objectID], extendSelection)),
+
+    toggleObjectSelection: (objectID, extendSelection) =>
+      dispatch(Actions.ToggleSelectObjects([objectID], extendSelection)),
+
+    moveSelectedObjects: (displacement) =>
+      dispatch(Actions.MoveSelectedObjects(displacement)),
+
   }
 };
 

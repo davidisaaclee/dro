@@ -1,8 +1,8 @@
 import * as R from 'ramda';
-
 import * as M from "./Models";
 import * as Actions from "./Actions";
 import { Set } from "./utility/Set";
+import * as L from "./Lenses";
 
 // // TODO: Move to this shape of state.
 // const initState = {
@@ -34,7 +34,7 @@ const initialState = {
 			children: []
 		}),
 	},
-	dragAmount: null
+	dragAmount: M.Vector.zero
 };
 
 function makeRectangle(origin) {
@@ -45,51 +45,30 @@ function makeRectangle(origin) {
 	})
 }
 
+
 // ObjectID -> GraphicObject -> GraphicObject
 const addChild = (childID) =>
 	R.over(R.lensProp('children'), R.append(childID))
 
 // ObjectID -> GraphicObject -> GraphicObject
-const setID = (id) => R.set(R.lensProp('id'), id)
+const setObjectID = (id) => R.set(R.lensProp('id'), id)
 
 // (GraphicObject, ObjectID) -> State -> State
 const insertObject = (object, parentID) => (state) => {
-	let id = `object-${R.view(objectCounterLens, state)}`;
+	let id = `object-${R.view(L.objectCounterLens, state)}`;
 
-	let addObject = R.set(R.compose(objectSetLens, R.lensProp(id)), object);
-	let updateID = R.over(lensForObjectAtID(id), setID(id));
-	let updateCount = R.over(objectCounterLens, R.inc);
-	let updateParent = R.over(lensForObjectAtID(parentID), addChild(id));
+	let addObject = R.set(R.compose(L.objectSetLens, R.lensProp(id)), object);
+	let updateID = R.over(L.lensForObjectAtID(id), setObjectID(id));
+	let updateCount = R.over(L.objectCounterLens, R.inc);
+	let updateParent = R.over(L.lensForObjectAtID(parentID), addChild(id));
 
 	return R.compose(updateParent, updateCount, updateID, addObject)(state);
 }
 
-// Lens State Int
-const objectCounterLens = R.lensProp('objectCounter');
-
-// Lens State GraphicObjectSet
-const objectSetLens = R.lensProp('objects');
-
-// ObjectID -> Lens State GraphicObject
-const lensForObjectAtID = (objectID) =>
-	R.compose(objectSetLens, R.lensProp(objectID))
-
-// Lens State [ObjectID]
-const selectedObjectsLens = R.lensProp('selectedObjects')
-
-
-// Lens State Vector
-const dragAmountLens = R.lensProp('dragAmount');
-
 const mutateObject = (state, objectID, mutator) =>
-	R.over(lensForObjectAtID(objectID), mutator, state)
+	R.over(L.lensForObjectAtID(objectID), mutator, state)
 
-const nullifyDrag = R.set(dragAmountLens, null)
-
-const updateSelection = (objectIDs, extendSelection) => (previousSelectedObjects) =>
-	extendSelection
-		? objectIDs.reduce(Set.toggle, previousSelectedObjects)
-		: new Set(objectIDs)
+const nullifyDrag = R.set(L.dragAmountLens, null)
 
 
 export function reduce(state = initialState, action) {
@@ -100,62 +79,58 @@ export function reduce(state = initialState, action) {
 				action.parameters.parent)(state);
 
 
-		case Actions.Types.PickupObject:
-			const resetDrag =
-				R.set(dragAmountLens, M.Vector.zero);
-			const selectObj =
-				R.over(
-					selectedObjectsLens,
-					updateSelection(
-						[action.parameters.objectID],
-						action.parameters.extendSelection));
-
-			return R.compose(resetDrag, selectObj)(state);
-
-
-		case Actions.Types.DragObject:
-			if (state.dragAmount == null) {
-				return state;
-			}
-
-			return Object.assign({}, state, {
-				dragAmount: action.parameters.dragAmount
-			});
-
-
-		case Actions.Types.DropObject:
-			if (state.dragAmount == null) {
-				return state;
-			}
-
-			const dropObject = (previousState, objectID) =>
-				mutateObject(previousState, objectID,
-					R.over(
-						R.lensProp('origin'),
-						(origin) => M.Vector.sum(origin, action.parameters.displacement)))
-					// Object.assign({}, object, {
-					//	origin: M.Vector.sum(object.origin, action.parameters.displacement)
-					// }))
-
-			const deselectIfNeeded = (state) => state
-				// R.over(
-				//	selectedObjectsLens,
-				//	updateSelection([], action.parameters.extendSelection),
-				//	state)
-
-			return state.selectedObjects
-				.asArray()
-				.reduce(
-					dropObject,
-					deselectIfNeeded(nullifyDrag(state)));
+		case Actions.Types.DragSelectedObjects:
+			return R.set(
+				L.dragAmountLens,
+				action.parameters.displacement,
+				state);
 
 
 		case Actions.Types.SelectObjects:
-			return state;
-			// return R.over(
-			//	selectedObjectsLens,
-			//	updateSelection(action.parameters.objectIDs, action.parameters.extendSelection),
-			//	state)
+			const insertSelections = (objectIDs, extendSelection) => (previousSelectedObjects) =>
+				extendSelection
+					? objectIDs.reduce(Set.insert, previousSelectedObjects)
+					: new Set(objectIDs)
+
+			return R.over(
+				L.selectedObjectsLens,
+				insertSelections(
+					action.parameters.objectIDs,
+					action.parameters.extendSelection),
+				state)
+
+
+		case Actions.Types.ToggleSelectObjects:
+			const toggleSelections = (objectIDs, extendSelection) => (previousSelectedObjects) =>
+				extendSelection
+					? objectIDs.reduce(Set.toggle, previousSelectedObjects)
+					: new Set(objectIDs)
+
+			return R.over(
+				L.selectedObjectsLens,
+				toggleSelections(
+					action.parameters.objectIDs,
+					action.parameters.extendSelection),
+				state)
+
+
+		case Actions.Types.MoveSelectedObjects:
+			const moveObject = (displacement) =>
+				R.over(
+					R.lensProp('origin'),
+					R.curry(M.Vector.sum)(displacement))
+
+			const moveAllObjects = (state) =>
+				R.view(L.selectedObjectsLens, state).asArray().reduce((s, id) =>
+					R.over(
+						L.lensForObjectAtID(id),
+						moveObject(action.parameters.displacement),
+						s),
+					state)
+
+			const resetDragAmount = R.set(L.dragAmountLens, M.Vector.zero);
+
+			return R.compose(moveAllObjects, resetDragAmount)(state);
 
 
 		default:

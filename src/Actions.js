@@ -7,23 +7,23 @@ function makeAction(actionType, parameters) {
 
 export const Types = {
 	AddRectangle: "AddRectangle",
-	DragObject: "DragObject",
-	DropObject: "DropObject",
-	PickupObject: "PickupObject",
+	DragSelectedObjects: "DragSelectedObjects",
 	SelectObjects: "SelectObjects",
+	ToggleSelectObjects: "ToggleSelectObjects",
+	MoveSelectedObjects: "MoveSelectedObjects",
 };
 
 export const AddRectangle = (origin, parent) =>
 	makeAction(Types.AddRectangle, { origin, parent })
 
-export const PickupObject = (objectID, extendSelection) =>
-	makeAction(Types.PickupObject, { objectID, extendSelection })
-
-export const DragObject = (dragAmount) =>
-	makeAction(Types.DragObject, { dragAmount })
-
-export const DropObject = (displacement, extendSelection) =>
-	makeAction(Types.DropObject, { displacement, extendSelection })
+export const DragSelectedObjects = (displacement) =>
+	makeAction(Types.DragSelectedObjects, { displacement })
 
 export const SelectObjects = (objectIDs, extendSelection) =>
 	makeAction(Types.SelectObjects, { objectIDs, extendSelection })
+
+export const ToggleSelectObjects = (objectIDs, extendSelection) =>
+	makeAction(Types.ToggleSelectObjects, { objectIDs, extendSelection })
+
+export const MoveSelectedObjects = (displacement) =>
+	makeAction(Types.MoveSelectedObjects, { displacement })

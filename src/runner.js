@@ -22,6 +22,6 @@ const makeStore = () => createStore(reduce)
 
 export const start = () => {
 	let store = makeStore()
-	// store.subscribe(() => console.log(store.getState()));
+	// store.subscribe(() => console.log(store.getState().selectedObjects.asArray()));
 	renderWithStore(store)
 }

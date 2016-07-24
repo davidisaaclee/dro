@@ -1,8 +1,13 @@
 import * as R from 'react';
+import { Vector } from '../../Models';
 
 export class GraphicObjectView extends R.Component {
   constructor(props) {
     super(props);
+
+    this.state = {
+      mouseDownPoint: null
+    };
 
     // Bind methods to `this`.
     this.handleMouseOver = this.handleMouseOver.bind(this);
@@ -19,8 +24,8 @@ export class GraphicObjectView extends R.Component {
       onMouseLeave: this.handleMouseLeave,
 
       style: Object.assign({
-        left: this.props.object.origin.x + "px",
-        top: this.props.object.origin.y + "px",
+        left: `${this.props.object.origin.x}px`,
+        top: `${this.props.object.origin.y}px`,
       }, this.makeStyleFor(this.props.object)),
     }, this.props.object.children.map((child, index) => {
       let path = this.props.path.concat(child.id);
@@ -65,7 +70,7 @@ export class GraphicObjectView extends R.Component {
           return {};
       }
     }
-    
+
     return Object.assign({}, shapeStyle());
   }
 
