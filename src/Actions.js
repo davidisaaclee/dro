@@ -11,6 +11,7 @@ export const Types = {
 	SelectObjects: "SelectObjects",
 	ToggleSelectObjects: "ToggleSelectObjects",
 	MoveSelectedObjects: "MoveSelectedObjects",
+	SoftReplaceObjectSelection: "SoftReplaceObjectSelection",
 };
 
 export const AddRectangle = (origin, parent) =>
@@ -27,3 +28,6 @@ export const ToggleSelectObjects = (objectIDs, extendSelection) =>
 
 export const MoveSelectedObjects = (displacement) =>
 	makeAction(Types.MoveSelectedObjects, { displacement })
+
+export const SoftReplaceObjectSelection = (objectID) =>
+	makeAction(Types.SoftReplaceObjectSelection, { objectID })

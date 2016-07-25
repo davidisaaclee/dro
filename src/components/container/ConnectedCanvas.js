@@ -86,6 +86,9 @@ const mapDispatchToProps = (dispatch) => {
     moveSelectedObjects: (displacement) =>
       dispatch(Actions.MoveSelectedObjects(displacement)),
 
+    softReplaceObjectSelection: (objectID) =>
+      dispatch(Actions.SoftReplaceObjectSelection(objectID)),
+
   }
 };
 

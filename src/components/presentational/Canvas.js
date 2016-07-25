@@ -104,12 +104,18 @@ export class Canvas extends React.Component {
   }
 
   dragTo(location) {
-		if (this.state.interactionObjectID == null) {
+		let draggedObjectID = this.state.interactionObjectID;
+		if (draggedObjectID == null) {
 			return;
 		}
 
 		let displacement = Vector.difference(location, this.state.initialDragPoint);
-		this.props.selectObject(this.state.interactionObjectID, this.state.isExtendingSelection);
+
+		if (this.state.isExtendingSelection) {
+			this.props.selectObject(draggedObjectID, true);
+		} else {
+			this.props.softReplaceObjectSelection(draggedObjectID);
+		}
 		this.props.dragSelectedObjects(displacement);
   }
 
@@ -155,7 +161,6 @@ export class Canvas extends React.Component {
   }
 
   objectWasDragged(objectID, displacement) {
-		this.props.selectObject(objectID, this.state.isExtendingSelection);
 		this.props.moveSelectedObjects(displacement);
   }
 

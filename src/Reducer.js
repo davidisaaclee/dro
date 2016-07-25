@@ -114,6 +114,16 @@ export function reduce(state = initialState, action) {
 				state)
 
 
+		case Actions.Types.SoftReplaceObjectSelection:
+			let { objectID } = action.parameters;
+
+			if (R.view(L.selectedObjectsLens, state).contains(objectID)) {
+				return state;
+			} else {
+				return R.set(L.selectedObjectsLens, new Set([objectID]), state);
+			}
+
+
 		case Actions.Types.MoveSelectedObjects:
 			const moveObject = (displacement) =>
 				R.over(
