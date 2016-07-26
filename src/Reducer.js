@@ -4,38 +4,36 @@ import * as Actions from "./Actions";
 import { Set } from "./utility/Set";
 import * as L from "./Lenses";
 
-// // TODO: Move to this shape of state.
-// const initState = {
-//	view: {
-//		selectedObjects: new Set(),
-//		dragAmount: null,
-//	},
-//	document: {
-//		objectCounter: 0,
-//		objects: {
-//		  root: M.GraphicObject({
-//				id: 'root',
-//				origin: M.Vector(0, 0),
-//				children: []
-//			}),
-//		},
-//	},
-//	session: {
-//	}
-// }
-
+// TODO: Move to this shape of state.
 const initialState = {
-	selectedObjects: new Set(),
-	objectCounter: 0,
-	objects: {
-	  root: M.GraphicObject({
-			id: 'root',
-			origin: M.Vector(0, 0),
-			children: []
-		}),
+	view: {
+		selectedObjects: new Set(),
+		dragAmount: null,
 	},
-	dragAmount: M.Vector.zero
-};
+	document: {
+		objectCounter: 0,
+		objects: {
+		  root: M.GraphicObject({
+				id: 'root',
+				origin: M.Vector(0, 0),
+				children: []
+			}),
+		},
+	}
+}
+
+// const initialState = {
+//	selectedObjects: new Set(),
+//	objectCounter: 0,
+//	objects: {
+//	  root: M.GraphicObject({
+//			id: 'root',
+//			origin: M.Vector(0, 0),
+//			children: []
+//		}),
+//	},
+//	dragAmount: M.Vector.zero
+// };
 
 function makeRectangle(origin) {
 	return M.Rectangle({
@@ -61,6 +59,8 @@ const insertObject = (object, parentID) => (state) => {
 	let updateID = R.over(L.lensForObjectAtID(id), setObjectID(id));
 	let updateCount = R.over(L.objectCounterLens, R.inc);
 	let updateParent = R.over(L.lensForObjectAtID(parentID), addChild(id));
+
+	console.log('s', updateID(addObject(state)));
 
 	return R.compose(updateParent, updateCount, updateID, addObject)(state);
 }

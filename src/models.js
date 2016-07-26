@@ -17,8 +17,12 @@ export const Vector = Object.assign(VectorCons, {
   negate: (v) =>
     VectorCons(-v.x, -v.y),
 
-  sum: (v1, v2) =>
-    VectorCons(v1.x + v2.x, v1.y + v2.y),
+  sum: (v1, v2) => {
+    if (v1 == undefined || v2 == undefined) {
+      debugger;
+    }
+    return VectorCons(v1.x + v2.x, v1.y + v2.y)
+  },
 
   difference: (v1, v2) =>
     Vector.sum(v1, Vector.negate(v2)),

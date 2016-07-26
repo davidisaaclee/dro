@@ -6,32 +6,20 @@ import { Vector } from '../../Models';
 import * as L from '../../Lenses';
 
 const mutateObject = (state, objectID, mutator) =>
-  state.objects[objectID] == null
-    ? state
-    : Object.assign(
-        {},
-        state,
-        {
-          objects: Object.assign({}, state.objects, {
-            [objectID]: mutator(state.objects[objectID])
-          })
-        })
+  R.over(L.lensForObjectAtID(objectID), mutator, state)
 
 const objectSetToObjectTree = (objectSet, rootID = "root") => {
   // TODO: Remove objects as they are parsed, to disallow circular references.
-  function unflatten(flatObj) {
-    return Object.assign({}, flatObj, {
-      children: flatObj.children.map((childID) => unflatten(objectSet[childID]))
-    });
-  }
+  const unflatten =
+    R.over(
+      R.lensProp('children'),
+      R.map((childID) => unflatten(objectSet[childID])))
 
   return unflatten(objectSet[rootID]);
 };
 
 const applyDrag = (state) => {
-  let { selectedObjects, dragAmount, objects } = state;
-
-  if (state.dragAmount == null) {
+  if (R.view(L.dragAmountLens, state) == null) {
     return state;
   }
 
@@ -42,30 +30,33 @@ const applyDrag = (state) => {
 
     return R.over(
       R.lensPath([draggedObjectID, 'origin']),
-      R.curry(Vector.sum)(dragAmount),
+      R.curry(Vector.sum)(R.view(L.dragAmountLens, state)),
       objects);
   }
 
-  return Object.assign({}, state, {
-    objects: state.selectedObjects
-      .asArray()
-      .reduce(applyDragToObjectID, state.objects)
-  });
+  const addSelection = (selectedObjectIDs) => (objects) =>
+    selectedObjectIDs.reduce(applyDragToObjectID, objects)
+
+  const selectedObjectIDs = R.view(L.selectedObjectsLens, state).asArray()
+
+  return R.over(L.objectSetLens, addSelection(selectedObjectIDs), state)
 };
 
 function applySelection(state) {
-  return state.selectedObjects.asArray().reduce(function (state, id) {
-    return mutateObject(state, id, (obj) => Object.assign({}, obj, {
-      selected: true
-    }));
-  }, state);
+  return R.view(L.selectedObjectsLens, state)
+    .asArray()
+    .reduce(function (state, id) {
+      return mutateObject(state, id, (obj) => Object.assign({}, obj, {
+        selected: true
+      }));
+    }, state);
 }
 
 function mapStateToProps(state) {
   let preparedState = applySelection(applyDrag(state));
 
   return {
-    root: objectSetToObjectTree(preparedState.objects)
+    root: objectSetToObjectTree(R.view(L.objectSetLens, preparedState))
   };
 }
 
